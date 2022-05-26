@@ -1,0 +1,30 @@
+{
+  "name": "hackathon-public-services-by-geolocation",
+  "version": "1.0.0",
+  "description": "Serve public services by geolocation",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EliranSiboni/public-services-by-geolocation.git"
+  },
+  "author": "Eliran Siboni",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/EliranSiboni/public-services-by-geolocation/issues"
+  },
+  "homepage": "https://github.com/EliranSiboni/public-services-by-geolocation#readme",
+  "dependencies": {
+    "body-parser": "^1.20.0",
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongodb": "^4.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.16"
+  }
+}
