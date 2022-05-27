@@ -9,9 +9,8 @@ servicesRouter.get("/register", auth.register);
 
 servicesRouter.use(auth.protect);
 
-// db.connectToServer(() => {});
 servicesRouter.post("/", async (req, res, next) => {
-  const { lat, long } = req.body;
+  const { lat, long, maxDistance } = req.body;
 
   if (!lat || !long)
     return next(
@@ -23,50 +22,29 @@ servicesRouter.post("/", async (req, res, next) => {
 
   const dbConnect = await db.getDb();
 
-  const gpQuery = await dbConnect.collection("gp").find({}).toArray();
+  const filter = {
+    coordinates: {
+      $near: {
+        $geometry: {
+          type: "Point",
+          coordinates: [Number(lat), Number(long)],
+        },
+        $minDistance: 0,
+        $maxDistance: Number(maxDistance) ?? 1500,
+      },
+    },
+  };
 
-  const gp = gpQuery
-    .sort(
-      (a, b) =>
-        distance(lat, long, a.Latitude, a.Longitude) -
-        distance(lat, long, b.Latitude, b.Longitude)
-    )
-    .slice(0, 3);
-
-  const hospitalsQuery = await dbConnect
+  const gp = await dbConnect.collection("gp").find(filter).toArray();
+  const hospitals = await dbConnect
     .collection("hospitals")
-    .find({})
+    .find(filter)
     .toArray();
-
-  const hospitals = hospitalsQuery
-    .sort(
-      (a, b) =>
-        distance(lat, long, a.Latitude, a.Longitude) -
-        distance(lat, long, b.Latitude, b.Longitude)
-    )
-    .slice(0, 3);
-
-  const pharmacyQuery = await dbConnect
+  const pharmacy = await dbConnect
     .collection("pharmacy")
-    .find({})
+    .find(filter)
     .toArray();
-  const pharmacy = pharmacyQuery
-    .sort(
-      (a, b) =>
-        distance(lat, long, a.Latitude, a.Longitude) -
-        distance(lat, long, b.Latitude, b.Longitude)
-    )
-    .slice(0, 3);
-
-  const schoolsQuery = await dbConnect.collection("schools").find({}).toArray();
-
-  const schools = schoolsQuery
-    .sort(
-      (a, b) =>
-        distance(lat, long, a.Latitude, a.Longitude) -
-        distance(lat, long, b.Latitude, b.Longitude)
-    )
-    .slice(0, 3);
+  const schools = await dbConnect.collection("schools").find(filter).toArray();
 
   return res.status(200).json({
     status: "success",
@@ -78,28 +56,5 @@ servicesRouter.post("/", async (req, res, next) => {
     },
   });
 });
-
-const distance = (lat1, lon1, lat2, lon2, unit = "K") => {
-  var radlat1 = (Math.PI * lat1) / 180;
-  var radlat2 = (Math.PI * lat2) / 180;
-  var theta = lon1 - lon2;
-  var radtheta = (Math.PI * theta) / 180;
-  var dist =
-    Math.sin(radlat1) * Math.sin(radlat2) +
-    Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
-  if (dist > 1) {
-    dist = 1;
-  }
-  dist = Math.acos(dist);
-  dist = (dist * 180) / Math.PI;
-  dist = dist * 60 * 1.1515;
-  if (unit == "K") {
-    dist = dist * 1.609344;
-  }
-  if (unit == "N") {
-    dist = dist * 0.8684;
-  }
-  return dist;
-};
 
 module.exports = servicesRouter;
