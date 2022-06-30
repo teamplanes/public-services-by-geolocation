@@ -1,13 +1,8 @@
 const express = require("express");
-const auth = require("../utils/auth");
 const AppError = require("../lib/Error");
 const db = require("../utils/db");
 
 const servicesRouter = express.Router();
-
-servicesRouter.get("/register", auth.register);
-
-servicesRouter.use(auth.protect);
 
 servicesRouter.post("/", async (req, res, next) => {
   const { lat, long, maxDistance } = req.body;
@@ -22,6 +17,17 @@ servicesRouter.post("/", async (req, res, next) => {
 
   const dbConnect = await db.getDb();
 
+  const maxDistanceNumber = Number(maxDistance ?? '1500');
+
+  if (maxDistanceNumber > 10000) {
+    return next(
+      new AppError(405, "maxDistance cannot exceed 10km", "maxDistance cannot exceed 10km"),
+      req,
+      res,
+      next
+    );
+  }
+
   const filter = {
     coordinates: {
       $near: {
@@ -30,7 +36,7 @@ servicesRouter.post("/", async (req, res, next) => {
           coordinates: [Number(lat), Number(long)],
         },
         $minDistance: 0,
-        $maxDistance: Number(maxDistance) ?? 1500,
+        $maxDistance: maxDistanceNumber,
       },
     },
   };
